@@ -1,175 +1,45 @@
-# TokenSHAP & PixelSHAP
+# TokenSHAP-Extensions: Structured Prompt Explainability Toolkit
 
-## Overview
-TokenSHAP is a Python library for interpreting large language models and vision models using Monte Carlo Shapley Value estimation. It provides tools to analyze token importance in text prompts (TokenSHAP) and object importance in images (PixelSHAP).
+### Project Overview
+TokenSHAP-Extensions is a research-driven enhancement of the original [TokenSHAP](https://github.com/ronigold/TokenSHAP) framework, designed to make explainability methods more effective for **structured question-answering (QA)** and **biomedical reasoning** tasks.  
+While the original TokenSHAP provides token-level interpretability for general text generation, this extension adapts it to handle **prompts with fixed sections** that should not be perturbed during Shapley value estimation.
 
-## Key Components
+This work is part of the **Advanced XAI Toolkit** project at *San José State University* for the course *DATA298*, focused on evaluating and improving explainability techniques for biomedical large language models (LLMs).
 
-### Core Architecture
-- **BaseSHAP**: Abstract base class providing Shapley value calculation framework
-- **TokenSHAP**: Text token importance analysis for LLMs
-- **PixelSHAP**: Object importance analysis for vision models using segmentation
+---
 
-### Model Support
-- **OpenAI API**: GPT models via OpenAI client
-- **Ollama**: Local model deployment support
-- **HuggingFace**: Local transformers models
-- **Vision Models**: Multimodal LLMs with image understanding
+### Motivation
+Standard XAI methods like SHAP or LIME are designed for unstructured text inputs.  
+However, **QA datasets** often contain structured prompts with fixed sections, leading to unreliable attributions when those segments are randomly perturbed.  
+Our goal is to extend TokenSHAP to:
 
-### Vectorization Methods
-- **TF-IDF**: Basic text similarity measurement
-- **HuggingFace Embeddings**: Sentence transformers for semantic similarity
-- **OpenAI Embeddings**: API-based text embeddings
+1. Perturb only the **question** portion of structured QA prompts.  
+2. Integrate **correctness-aware and semantic value functions** to make token importance more faithful to model reasoning.  
+3. Enable domain-specific interpretability evaluation across biomedical LLMs.
 
-## Installation
-```bash
-pip install -r requirements.txt
+---
+
+### Core Features
+- **QATokenSHAP** – Subclass of TokenSHAP that performs Monte Carlo sampling only on the question part of a structured prompt.
+- **Flexible Section Extractors** – Functions that automatically separate variable (question) and fixed (suffix) parts of a prompt.
+- **Correctness-Aware Value Function (planned)** – Computes explanation faithfulness based on model answer correctness.
+- **Embedding-Based Value Function (planned)** – Uses semantic similarity from biomedical embeddings for improved interpretability.
+
+---
+
+### Architecture Overview
+``` python
+TokenSHAP/
+├── qa_tokenshap.py # QATokenSHAP class implementation
+├── extractors.py # Default QA prompt extractor functions
+└── value_functions/
+    └── correctness_aware.py # Placeholder for correctness-based value function
 ```
+### Team & Acknowledgments
 
-## Core Dependencies
-- numpy, pandas: Data processing
-- matplotlib: Visualization
-- scikit-learn: TF-IDF vectorization
-- transformers: HuggingFace models
-- sentence-transformers: Text embeddings
-- opencv-python: Image processing (for PixelSHAP)
-- ultralytics: YOLO object detection (optional)
+**Team 8 – Advanced XAI Toolkit**
+Jeff Chong • Anne Ha • Jiyoon Lee • Matthew Leffler • Nairui Liu
+Faculty Advisor: Prof. Simon Shim, Department of Applied Data Science, SJSU
 
-## Quick Start
-
-### TokenSHAP Example
-```python
-from token_shap import TokenSHAP
-from token_shap.base import OpenAIModel, TfidfTextVectorizer, StringSplitter
-
-# Initialize model and vectorizer
-model = OpenAIModel(model_name="gpt-4", api_key="YOUR_KEY")
-vectorizer = TfidfTextVectorizer()
-splitter = StringSplitter(split_pattern=' ')
-
-# Create TokenSHAP instance
-token_shap = TokenSHAP(model=model, splitter=splitter, vectorizer=vectorizer)
-
-# Analyze prompt
-prompt = "Explain quantum computing in simple terms"
-results = token_shap.analyze(prompt, sampling_ratio=0.5)
-
-# Visualize
-token_shap.plot_colored_text()
-```
-
-### PixelSHAP Example
-```python
-from token_shap import PixelSHAP
-from token_shap.image_utils import YOLODetectionModel, Sam2Adapter
-from token_shap.base import OpenAIModel, TfidfTextVectorizer
-
-# Initialize components
-model = OpenAIModel(model_name="gpt-4-vision", api_key="YOUR_KEY")
-detector = YOLODetectionModel(model_path="yolov8x.pt")
-segmenter = Sam2Adapter(sam2_model_id="facebook/sam2.1-hiera-large")
-vectorizer = TfidfTextVectorizer()
-
-# Create PixelSHAP instance
-pixel_shap = PixelSHAP(
-    model=model,
-    segmentation_model=segmenter,
-    manipulator=SegmentationBased(),
-    vectorizer=vectorizer
-)
-
-# Analyze image
-results, shapley_values = pixel_shap.analyze(
-    image_path="image.jpg",
-    prompt="What objects are in this image?",
-    sampling_ratio=0.5
-)
-
-# Visualize importance
-pixel_shap.visualize(heatmap_style=True, show_labels=True)
-```
-
-## Key Features
-
-### TokenSHAP
-- **Monte Carlo Sampling**: Efficient approximation of Shapley values for large prompts
-- **Flexible Splitting**: Custom tokenization strategies (word, subword, character)
-- **Multiple Visualizations**: Colored text, heatmaps, background highlighting
-- **Sampling Control**: Adjust sampling_ratio for speed vs accuracy tradeoff
-
-### PixelSHAP
-- **Object Segmentation**: Automatic object detection and segmentation
-- **Importance Heatmaps**: Visual overlays showing object importance
-- **Mask Extraction**: Access to segmentation masks with Shapley values
-- **Multiple Manipulators**: Different strategies for hiding objects (blur, fill, etc.)
-
-## Algorithm Details
-
-### Shapley Value Calculation
-1. **Baseline Generation**: Get model response with full input
-2. **Combination Sampling**: Generate subsets of tokens/objects
-3. **Response Collection**: Get model outputs for each combination
-4. **Similarity Measurement**: Compare responses to baseline using vectorization
-5. **Shapley Computation**: Calculate marginal contributions
-6. **Normalization**: Scale values to [0,1] range
-
-### Sampling Strategy
-- **Essential Combinations**: Always includes leave-one-out combinations
-- **Random Sampling**: Additional combinations based on sampling_ratio
-- **Max Combinations**: Optional limit for computational efficiency
-
-## Configuration
-
-### Debug Mode
-Enable detailed logging:
-```python
-token_shap = TokenSHAP(model=model, splitter=splitter, vectorizer=vectorizer, debug=True)
-```
-
-### Sampling Parameters
-- `sampling_ratio`: 0.0-1.0, controls number of combinations (0=essential only)
-- `max_combinations`: Hard limit on total combinations
-- Higher values = more accurate but slower
-
-### Visualization Options
-- `heatmap_style`: Color intensity based on importance
-- `show_labels`: Display object/token labels
-- `overlay_original`: Blend visualization with original image
-- `opacity` controls: Fine-tune transparency levels
-
-## Output Formats
-
-### Results DataFrame
-- **Content**: Token/object combination used
-- **Response**: Model output for combination
-- **Similarity**: Similarity score to baseline
-- **Indexes**: Indices of included items
-
-### Shapley Values Dictionary
-- Keys: Token/object identifiers
-- Values: Normalized importance scores (0-1)
-
-### Saved Outputs
-- `results.csv`: Full combination results
-- `shapley_values.json`: Importance scores
-- `metadata.json`: Analysis configuration
-
-## Performance Tips
-1. Start with low sampling_ratio (0.1-0.3) for initial exploration
-2. Use max_combinations to cap computation time
-3. Choose appropriate vectorizer for your use case
-4. Enable debug mode to monitor progress
-5. For images, limit object detection confidence threshold
-
-## Error Handling
-- Validates model responses before processing
-- Handles empty detections gracefully
-- Provides debug output for troubleshooting
-- Automatic cleanup of temporary files
-
-## Extension Points
-- Custom model wrappers via ModelBase
-- Custom vectorizers via TextVectorizer
-- Custom splitters for TokenSHAP
-- Custom manipulators for PixelSHAP
-- Custom segmentation models
+This project builds upon the open-source [TokenSHAP](https://github.com/ronigold/TokenSHAP) library by **Roni Goldshmidt** and **Miriam Horovicz**.
+All original source files under `token_shap/` remain **unmodified**. 

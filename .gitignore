@@ -1,8 +1,24 @@
+# Jupyter artifacts
 .ipynb_checkpoints/
+
 # Ignore outputs
 *.mp4
 *.jpg
 *.png
 *.pt
+
+# Python cache
 __pycache__/
+
+# Notebook results
 notebooks/dynamic_sam2_results/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Virtual environments
+.venv/
+env/
+venv/
+
