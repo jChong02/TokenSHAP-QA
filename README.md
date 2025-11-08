@@ -28,6 +28,6 @@ TokenSHAP/
 │   ├── extractors.py # Default and custom prompt extractors
 │   └── value_functions/ # Experimental correctness/semantic modules
 └── notebooks/
-    ├── QA_TokenSHAP_Examples.ipynb
+    ├── QA_TokenSHAP_Examples.ipynb # Not implemented yet
     └── (original TokenSHAP notebooks)
 ```
