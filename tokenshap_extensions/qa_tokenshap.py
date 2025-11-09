@@ -36,6 +36,7 @@ class QATokenSHAP(TokenSHAP):
             raise TypeError("section_extractor must be callable.")
         
         self.section_extractor = section_extractor or qa_extractor
+        self.static_suffix = ""
     
     def _get_samples(self, content: str) -> List[str]:
         """Get question tokens from structured prompt"""
@@ -45,7 +46,7 @@ class QATokenSHAP(TokenSHAP):
     def _prepare_combination_args(self, combination: List[str], original_content: str) -> Dict:
         """Prepare model input by reattaching the fixed suffix"""
         prompt = self.splitter.join(combination)
-        if getattr(self, "static_suffix", ""):
+        if self.static_suffix:
             prompt = f"{prompt}\n\n{self.static_suffix}"
         return {"prompt": prompt}
     
