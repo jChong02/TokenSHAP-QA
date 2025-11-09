@@ -17,16 +17,26 @@ def qa_extractor(prompt: str) -> tuple[str, str]:
             - question_text: the main, variable question portion
             - static_suffix: any fixed section (e.g., "Answer Choices: ...")
     """
+    if not isinstance(prompt, str):
+        raise TypeError(f"Input prompt must be str, got {type(prompt).__name__}.")
+    
+    if not prompt.strip():
+        raise ValueError("Input prompt cannot be empty or whitespace.")
+    
     prompt = prompt.strip()
     question_text, static_suffix = prompt, ""
 
     # Split off suffix if present
     if "Answer Choices:" in prompt:
         parts = prompt.split("Answer Choices:", 1)
-        question_text, static_suffix = parts[0], "Answer Choices:" + parts[1]
+        question_text = parts[0].strip()
+        static_suffix = ("Answer Choices:" + parts[1]).strip()
 
     # Remove leading label only if it exists
-    if question_text.strip().startswith("Question:"):
-        question_text = question_text.replace("Question:", "", 1).strip()
+    if question_text.startswith("Question:"):
+        question_text = question_text[len("Question:"):].strip()
 
-    return question_text.strip(), static_suffix.strip()
+    if not question_text:
+        raise ValueError("Extracted question text is empty after removing markers.")
+    
+    return question_text, static_suffix
